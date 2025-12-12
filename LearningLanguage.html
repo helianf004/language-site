@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>آموزش زبان – دارای دسته‌بندی</title>
+  <style>
+    body {
+      font-family: "Vazir", sans-serif;
+      background: #0f172a;
+      margin: 0;
+      padding: 0;
+      color: #e2e8f0;
+    }
+    header {
+      background: #1e293b;
+      color: #fff;
+      padding: 25px;
+      text-align: center;
+      font-size: 28px;
+      font-weight: bold;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 15px;
+    }
+    .card {
+      background: #1e293b;
+      border-radius: 18px;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      transition: 0.3s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 26px rgba(0,0,0,0.6);
+    }
+    select, input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 10px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+    button {
+      padding: 12px 18px;
+      background: #7c0808;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 16px;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #7c0808;
+    }
+    footer {
+      text-align: center;
+      padding: 15px;
+      color: #94a3b8;
+      margin-top: 40px;
+    }
+    .result { margin-top: 12px; font-weight: bold; color:#ff8400; }
+</style>
+</head>
+<body>
+  <header>سایت آموزشی زبان – نسخه با دسته‌بندی</header>
+
+  <div class="container">
+
+    <!-- انتخاب دسته‌بندی -->
+    <div class="card">
+      <h2>انتخاب دسته‌بندی لغات</h2>
+      <select id="categorySelect" onchange="loadWords()">
+        <option value="greetings">سلام و احوالپرسی</option>
+        <option value="animals">حیوانات</option>
+        <option value="objects">اشیا</option>
+      </select>
+    </div>
+
+    <!-- انتخاب لغت -->
+    <div class="card">
+      <h2>1. انتخاب لغت و نمایش ترجمه + مثال</h2>
+      <select id="wordSelect"></select>
+      <button onclick="showTranslation()">نمایش اطلاعات</button>
+      <div id="translation" class="result"></div>
+      <div id="exampleSentence" style="margin-top:10px;color:#333;"></div>
+    </div>
+
+    <!-- تمرین -->
+    <div class="card">
+      <h2>2. تمرین ترجمه با امتیاز</h2>
+      <p id="practiceWord" style="font-size:22px;font-weight:bold;">Hello</p>
+      <input id="answer" placeholder="ترجمه را وارد کنید..." />
+      <button onclick="checkAnswer()">بررسی</button>
+      <div id="practiceResult" class="result"></div>
+      <p>امتیاز: <span id="score">0</span></p>
+    </div>
+
+    <!-- صوت -->
+    <div class="card">
+      <h2>3. پخش تلفظ</h2>
+      <select id="audioSelect"></select>
+      <button onclick="playAudio()">پخش</button>
+    </div>
+
+  </div>
+
+  <footer>طراحی شده برای اجرا در VS Code</footer>
+
+<script>
+  const categories = {
+    greetings: {
+      hello: { fa: "سلام", example: "Hello, how are you?" },
+      goodbye: { fa: "خداحافظ", example: "Goodbye! See you soon." },
+      thanks: { fa: "متشکرم", example: "Thanks for your help." }
+    },
+    animals: {
+      cat: { fa: "گربه", example: "The cat is cute." },
+      dog: { fa: "سگ", example: "The dog is running." },
+      bird: { fa: "پرنده", example: "The bird is singing." }
+    },
+    objects: {
+      book: { fa: "کتاب", example: "This book is interesting." },
+      chair: { fa: "صندلی", example: "The chair is wooden." },
+      phone: { fa: "تلفن", example: "My phone is new." }
+    },
+    colors: {
+      red: { fa: "قرمز", example: "The apple is red." },
+      blue: { fa: "آبی", example: "The sky is blue." },
+      green: { fa: "سبز", example: "The grass is green." }
+    },
+    food: {
+      apple: { fa: "سیب", example: "I eat an apple every day." },
+      bread: { fa: "نان", example: "Bread is on the table." },
+      rice: { fa: "برنج", example: "Rice is a common food." }
+    },
+    verbs: {
+      run: { fa: "دویدن", example: "I run every morning." },
+      eat: { fa: "خوردن", example: "I eat breakfast at 8." },
+      read: { fa: "خواندن", example: "I read books at night." }
+    },
+    daily_phrases: {
+      how_are_you: { fa: "حال شما چطور است؟", example: "How are you today?" },
+      nice_to_meet_you: { fa: "از دیدنت خوشبختم", example: "Nice to meet you!" },
+      excuse_me: { fa: "ببخشید", example: "Excuse me, where is the station?" }
+    }
+  };
+
+  let score = 0;
+
+  function loadWords() {
+    const category = document.getElementById("categorySelect").value;
+    const words = Object.keys(categories[category]);
+
+    const wordSelect = document.getElementById("wordSelect");
+    const audioSelect = document.getElementById("audioSelect");
+
+    wordSelect.innerHTML = "";
+    audioSelect.innerHTML = "";
+
+    words.forEach(w => {
+      wordSelect.innerHTML += `<option value="${w}">${w}</option>`;
+      audioSelect.innerHTML += `<option value="${w}">${w}</option>`;
+    });
+
+    // تنظیم کلمه تمرین
+    document.getElementById("practiceWord").textContent = words[0];
+  }
+
+  function showTranslation() {
+    const category = document.getElementById("categorySelect").value;
+    const word = document.getElementById("wordSelect").value;
+
+    document.getElementById("translation").textContent = `ترجمه: ${categories[category][word].fa}`;
+    document.getElementById("exampleSentence").textContent = `مثال: ${categories[category][word].example}`;
+  }
+
+  function checkAnswer() {
+    const category = document.getElementById("categorySelect").value;
+    const word = document.getElementById("practiceWord").textContent;
+    const correct = categories[category][word].fa;
+    const user = document.getElementById("answer").value.trim();
+
+    if (user === correct) {
+      document.getElementById("practiceResult").textContent = "درست!";
+      score++;
+    } else {
+      document.getElementById("practiceResult").textContent = "اشتباه!";
+    }
+
+    document.getElementById("score").textContent = score;
+  }
+
+  function playAudio() {
+    const word = document.getElementById("audioSelect").value;
+    let audio = new SpeechSynthesisUtterance(word);
+    audio.lang = "en-US";
+    speechSynthesis.speak(audio);
+  }
+
+  // آزمون چندگزینه‌ای
+  function generateQuiz() {
+    const category = document.getElementById("categorySelect").value;
+    const words = Object.keys(categories[category]);
+    const quizArea = document.getElementById("quizArea");
+
+    const randomWord = words[Math.floor(Math.random() * words.length)];
+    const correct = categories[category][randomWord].fa;
+
+    const options = [correct];
+    while (options.length < 4) {
+      const w = categories[category][words[Math.floor(Math.random()*words.length)]].fa;
+      if (!options.includes(w)) options.push(w);
+    }
+    options.sort(() => Math.random() - 0.5);
+
+    quizArea.innerHTML = `<h3>معنی کلمه: ${randomWord}</h3>`;
+    options.forEach(o => {
+      quizArea.innerHTML += `<button onclick=checkQuizAnswer('${o}','${correct}')>${o}</button><br>`;
+    });
+  }
+
+  function checkQuizAnswer(selected, correct) {
+    const res = document.getElementById("quizResult");
+    if (selected === correct) res.textContent = "آفرین! درست بود";
+    else res.textContent = "اشتباه!";
+  }
+
+  // بارگذاری اولیه
+  loadWords();
+</script>
+
+</body>
+</html>
+
+
+
+
+
